@@ -1,3 +1,4 @@
+import axios from "axios";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -6,3 +7,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const onCloseApp = () => window.ipcRenderer.send("closeApp");
+
+const httpsClient = axios.create({
+  baseURL: import.meta.env.VITE_HOST_URL,
+});
+
+export const fetchUserProfile = async (clerkId: string) => {
+  const response = await httpsClient.get(`/auth/${clerkId}`, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  return response.data;
+};

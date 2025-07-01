@@ -1,5 +1,6 @@
-import { ClerkLoading, useUser } from "@clerk/clerk-react";
-import { useState } from "react";
+import { fetchUserProfile } from "@/lib/utils";
+import { ClerkLoading, SignedIn, useUser } from "@clerk/clerk-react";
+import { useEffect, useState } from "react";
 import Loader from "../loader";
 
 const Widget = () => {
@@ -27,6 +28,13 @@ const Widget = () => {
     };
   } | null>(null);
   const { user } = useUser();
+
+  useEffect(() => {
+    if (user && user.id) {
+      fetchUserProfile(user.id).then((p) => setProfile(p));
+    }
+  }, [user]);
+
   return (
     <div className="p-5">
       <ClerkLoading>
@@ -34,6 +42,15 @@ const Widget = () => {
           <Loader />
         </div>
       </ClerkLoading>
+      <SignedIn>
+        {profile ? (
+          <MediaConfiguration />
+        ) : (
+          <div className="w-full h-full flex justify-center items-center">
+            <Loader color="#fff" />
+          </div>
+        )}
+      </SignedIn>
     </div>
   );
 };

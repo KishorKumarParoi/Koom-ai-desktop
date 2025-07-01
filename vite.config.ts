@@ -1,13 +1,22 @@
 import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { defineConfig } from "vite";
 import electron from "vite-plugin-electron/simple";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  server: {
+    proxy: {
+      "/api": {
+        target: "https://localhost:3000/api",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
+  },
   plugins: [
-    react(),
+    tsconfigPaths(),
     tailwindcss(),
     electron({
       main: {

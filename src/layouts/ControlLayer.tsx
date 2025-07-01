@@ -24,9 +24,8 @@ const ControlLayer = ({ children, className }: Props) => {
       )}
     >
       <div className="flex justify-between items-center p-5 draggable">
-        <span className="non-draggable">
-          <UserButton />
-        </span>
+        <UserButton />
+        <span className="non-draggable"></span>
         <X
           size={20}
           className="text-gray-500 non-draggable hover:text-white cursor-pointer"
