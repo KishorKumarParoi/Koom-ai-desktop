@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Toaster } from "sonner";
 import "./App.css";
 import AuthButton from "./components/global/auth-button";
+import Widget from "./components/global/widget";
 import ControlLayer from "./layouts/ControlLayer";
 
 const client = new QueryClient();
@@ -14,6 +15,7 @@ function App() {
     <QueryClientProvider client={client}>
       <ControlLayer>
         <AuthButton />
+        <Widget />
       </ControlLayer>
       <Toaster />
     </QueryClientProvider>

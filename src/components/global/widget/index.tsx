@@ -28,6 +28,7 @@ const Widget = () => {
     };
   } | null>(null);
   const { user } = useUser();
+  const { state, fetchMediaResources } = useMediaSources();
 
   useEffect(() => {
     if (user && user.id) {
@@ -39,7 +40,7 @@ const Widget = () => {
     <div className="p-5">
       <ClerkLoading>
         <div className="h-full flex justify-center items-center">
-          <Loader />
+          <Loader state={false} color="#000" />
         </div>
       </ClerkLoading>
       <SignedIn>
@@ -47,7 +48,7 @@ const Widget = () => {
           <MediaConfiguration />
         ) : (
           <div className="w-full h-full flex justify-center items-center">
-            <Loader color="#fff" />
+            <Loader state={false} color="#fff" />
           </div>
         )}
       </SignedIn>
