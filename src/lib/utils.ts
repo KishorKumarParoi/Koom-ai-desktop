@@ -18,5 +18,19 @@ export const fetchUserProfile = async (clerkId: string) => {
       "Content-Type": "application/json",
     },
   });
+  console.log("Response: ", response);
   return response.data;
+};
+
+export const getMediaSources = async () => {
+  const displays = await window.ipcRenderer.invoke("getResources");
+  const enumerateDevices =
+    await window.navigator.mediaDevices.enumerateDevices();
+
+  const audioInputs = enumerateDevices.filter(
+    (device) => device.kind === "audioinput"
+  );
+
+  console.log("Getting Sources...");
+  return { displays, audioInputs };
 };
