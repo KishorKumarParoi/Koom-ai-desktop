@@ -34,3 +34,25 @@ export const getMediaSources = async () => {
   console.log("Getting Sources...");
   return { displays, audioInputs };
 };
+
+export const updateStudioSettings = async (
+  id: string,
+  screen: string,
+  audio: string,
+  preset: "HD" | "SD"
+) => {
+  const response = httpsClient.post(
+    `/studio/${id}`,
+    {
+      screen,
+      audio,
+      preset,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  return (await response).data;
+};

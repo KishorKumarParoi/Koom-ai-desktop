@@ -1,7 +1,9 @@
 import { useMediaSources } from "@/hooks/useMediaResources";
 import { fetchUserProfile } from "@/lib/utils";
-import { useUser } from "@clerk/clerk-react";
+import { ClerkLoading, SignedIn, useUser } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
+import Loader from "../loader";
+import MediaConfiguration from "../media-configuration";
 
 const Widget = () => {
   const [profile, setProfile] = useState<{
@@ -30,8 +32,8 @@ const Widget = () => {
   const { user } = useUser();
   const { state, fetchMediaResources } = useMediaSources();
 
-  // console.log("state", state);
-  // console.log("fetchMediaResources: ", fetchMediaResources);
+  console.log("state", state);
+  console.log("fetchMediaResources: ", fetchMediaResources);
 
   useEffect(() => {
     if (user && user.id) {
@@ -41,7 +43,6 @@ const Widget = () => {
 
   return (
     <div className="p-5">
-      {/*
       <ClerkLoading>
         <div className="h-full flex justify-center items-center">
           <Loader state={false} color="#000" />
@@ -49,13 +50,13 @@ const Widget = () => {
       </ClerkLoading>
       <SignedIn>
         {profile ? (
-          <MediaConfiguration />
+          <MediaConfiguration state={state} user={profile?.user} />
         ) : (
           <div className="w-full h-full flex justify-center items-center">
             <Loader state={false} color="#fff" />
           </div>
         )}
-      </SignedIn> */}
+      </SignedIn>
     </div>
   );
 };
