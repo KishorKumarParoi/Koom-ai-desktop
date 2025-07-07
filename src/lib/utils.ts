@@ -23,15 +23,23 @@ export const fetchUserProfile = async (clerkId: string) => {
 };
 
 export const getMediaSources = async () => {
+  // 1. Get display sources from main process (make sure main process handles "getResources")
   const displays = await window.ipcRenderer.invoke("getResources");
-  const enumerateDevices =
-    await window.navigator.mediaDevices.enumerateDevices();
 
+  // 2. Request audio permission before enumerateDevices
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (err) {
+    console.warn("Microphone permission denied or error:", err);
+  }
+
+  // 3. Now enumerate devices
+  const enumerateDevices = await navigator.mediaDevices.enumerateDevices();
   const audioInputs = enumerateDevices.filter(
     (device) => device.kind === "audioinput"
   );
 
-  console.log("Getting Sources...");
+  console.log("Getting Sources...", { displays, audioInputs });
   return { displays, audioInputs };
 };
 

@@ -1,11 +1,23 @@
 import tailwindcss from "@tailwindcss/vite";
-import path from "node:path";
+import path, { resolve } from "node:path";
 import { defineConfig } from "vite";
 import electron from "vite-plugin-electron/simple";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    emptyOutDir: false,
+    manifest: true,
+    outDir: "dist",
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, "index.html"),
+        studio_main: resolve(__dirname, "studio.html"),
+        web_cam_main: resolve(__dirname, "webcam.html"),
+      },
+    },
+  },
   server: {
     proxy: {
       "/api": {
