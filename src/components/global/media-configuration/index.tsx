@@ -30,13 +30,27 @@ type Props = {
 const MediaConfiguration = ({ state, user }: Props) => {
   const studio = user?.studio;
   const subscription = user?.subscription;
-  const id = studio?.id ?? "";
-  const screen = studio?.screen ?? null;
-  const audio = studio?.mic ?? null;
+  const id = user!.id;
+  const screen = studio?.screen || state.displays?.[0].id;
+  const audio = studio?.mic || state.audioInputs?.[0].deviceId;
   const preset = studio?.preset ?? "SD";
   const plan = subscription?.plan ?? "FREE";
 
-  const {} = useStudioSettings(id, screen, audio, preset, plan);
+  const activeScreen = state.displays?.find(
+    (screen) => screen.id === user?.studio?.screen
+  );
+
+  const activeAudio = state.audioInputs?.find(
+    (device) => device.deviceId === user?.studio?.mic
+  );
+
+  const { isPending, onPreset, register } = useStudioSettings(
+    id,
+    screen,
+    audio,
+    preset,
+    plan
+  );
 
   return (
     <form className="flex h-full relative w-full flex-col gap-y-5 ">

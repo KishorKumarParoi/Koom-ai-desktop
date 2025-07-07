@@ -29,6 +29,7 @@ const Widget = () => {
       clerkId: string;
     };
   } | null>(null);
+
   const { user } = useUser();
   const { state, fetchMediaResources } = useMediaSources();
 

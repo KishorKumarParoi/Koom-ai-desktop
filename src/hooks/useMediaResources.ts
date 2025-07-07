@@ -50,16 +50,20 @@ export const useMediaSources = () => {
       },
     });
 
-    getMediaSources().then((sources) =>
-      dispatch({
-        type: "GET_DEVICES",
-        payload: {
-          displays: sources.displays,
-          audioInputs: sources.audioInputs,
-          isPending: false,
-        },
-      })
-    );
+    getMediaSources()
+      .then((sources) =>
+        dispatch({
+          type: "GET_DEVICES",
+          payload: {
+            displays: sources.displays,
+            audioInputs: sources.audioInputs,
+            isPending: false,
+          },
+        })
+      )
+      .catch((err) => {
+        throw new Error(err);
+      });
   };
 
   return { state, fetchMediaResources };
