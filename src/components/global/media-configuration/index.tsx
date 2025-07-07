@@ -28,11 +28,13 @@ type Props = {
 };
 
 const MediaConfiguration = ({ state, user }: Props) => {
+  if (!user) return null;
+
   const studio = user?.studio;
   const subscription = user?.subscription;
   const id = user!.id;
-  const screen = studio?.screen || state.displays?.[0].id;
-  const audio = studio?.mic || state.audioInputs?.[0].deviceId;
+  const screen = studio?.screen || state.displays?.[0]?.id;
+  const audio = studio?.mic || state.audioInputs?.[0]?.deviceId;
   const preset = studio?.preset ?? "SD";
   const plan = subscription?.plan ?? "FREE";
 
@@ -53,7 +55,7 @@ const MediaConfiguration = ({ state, user }: Props) => {
   );
 
   return (
-    <form className="flex h-full relative w-full flex-col gap-y-5 ">
+    <form className="flex h-full relative w-full flex-col gap-y-5 text-white ">
       MediaConfiguration
     </form>
   );

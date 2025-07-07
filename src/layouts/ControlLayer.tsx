@@ -15,7 +15,7 @@ const ControlLayer = ({ children, className }: Props) => {
     console.log(event);
     setIsVisible(payload.state);
   });
-  
+
   return (
     <div
       className={cn(
@@ -24,8 +24,11 @@ const ControlLayer = ({ children, className }: Props) => {
         "bg-[#171717] flex px-1 flex-col rounded-3xl overflow-hidden"
       )}
     >
+      {/* Draggable top bar */}
       <div className="flex justify-between items-center p-5 draggable">
-        <UserButton />
+        <div className="non-draggable">
+          <UserButton />
+        </div>
         <span className="non-draggable"></span>
         <X
           size={20}

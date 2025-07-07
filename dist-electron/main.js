@@ -1,8 +1,6 @@
 import { app, BrowserWindow } from "electron";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
 import path from "node:path";
-createRequire(import.meta.url);
+import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
@@ -12,8 +10,21 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win;
 function createWindow() {
   win = new BrowserWindow({
+    width: 500,
+    height: 600,
+    minHeight: 600,
+    minWidth: 300,
+    frame: false,
+    hasShadow: false,
+    // backgroundColor: "#ff3f24",
+    transparent: true,
+    alwaysOnTop: true,
+    focusable: true,
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      devTools: true,
       preload: path.join(__dirname, "preload.mjs")
     }
   });

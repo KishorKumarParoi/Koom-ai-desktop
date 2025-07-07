@@ -14,7 +14,7 @@ const useStudioSettings = (
 ) => {
   const [onPreset, setPreset] = useState<"HD" | "SD" | "undefined">();
 
-  const { register, watch, errors, handleSubmit, watch, reset } = useZodForm(
+  const { register, errors, handleSubmit, watch, reset } = useZodForm(
     updateStudioSettingsSchema,
     {
       screen: screen!,
