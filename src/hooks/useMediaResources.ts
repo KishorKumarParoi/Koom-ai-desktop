@@ -1,5 +1,5 @@
 import { getMediaSources } from "@/lib/utils";
-import { useReducer } from "react";
+import { useEffect, useReducer } from "react";
 
 export type SourceDeviceStateProps = {
   displays?: {
@@ -42,7 +42,7 @@ export const useMediaSources = () => {
     }
   );
 
-  const fetchMediaResources = () => {
+  const fetchMediaResources = async () => {
     dispatch({
       type: "GET_DEVICES",
       payload: {
@@ -50,21 +50,30 @@ export const useMediaSources = () => {
       },
     });
 
-    getMediaSources()
-      .then((sources) =>
-        dispatch({
-          type: "GET_DEVICES",
-          payload: {
-            displays: sources.displays,
-            audioInputs: sources.audioInputs,
-            isPending: false,
-          },
-        })
-      )
-      .catch((err) => {
-        throw new Error(err);
+    try {
+      const sources = await getMediaSources();
+      dispatch({
+        type: "GET_DEVICES",
+        payload: {
+          displays: sources?.displays ?? [],
+          audioInputs: sources?.audioInputs ?? [],
+          isPending: false,
+        },
       });
+    } catch (err) {
+      dispatch({
+        type: "GET_DEVICES",
+        payload: {
+          error: err instanceof Error ? err.message : String(err),
+          isPending: false,
+        },
+      });
+    }
   };
+
+  useEffect(() => {
+    fetchMediaResources();
+  }, []);
 
   return { state, fetchMediaResources };
 };

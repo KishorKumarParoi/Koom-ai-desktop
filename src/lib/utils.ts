@@ -1,3 +1,5 @@
+"use server";
+
 import axios from "axios";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -23,24 +25,22 @@ export const fetchUserProfile = async (clerkId: string) => {
 };
 
 export const getMediaSources = async () => {
+  console.log("Hello....😀");
   // 1. Get display sources from main process (make sure main process handles "getResources")
   const displays = await window.ipcRenderer.invoke("getResources");
+  console.log("Displays: ", displays);
 
   // 2. Request audio permission before enumerateDevices
   try {
     await navigator.mediaDevices.getUserMedia({ audio: true });
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const audioInputs = devices.filter((d) => d.kind === "audioinput");
+
+    console.log("Getting Sources...", { displays, audioInputs });
+    return { displays, audioInputs };
   } catch (err) {
-    console.warn("Microphone permission denied or error:", err);
+    console.log("Microphone permission denied or error:", err);
   }
-
-  // 3. Now enumerate devices
-  const enumerateDevices = await navigator.mediaDevices.enumerateDevices();
-  const audioInputs = enumerateDevices.filter(
-    (device) => device.kind === "audioinput"
-  );
-
-  console.log("Getting Sources...", { displays, audioInputs });
-  return { displays, audioInputs };
 };
 
 export const updateStudioSettings = async (
