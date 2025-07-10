@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 const StudioTray = () => {
   const videoElement = useRef<HTMLVideoElement | null>(null);
   const [preview, setPreview] = useState(false);
+  const [recording, setRecording] = useState(false);
   const [onSources, setOnSources] = useState<
     | {
         screen: string;
@@ -22,7 +23,15 @@ const StudioTray = () => {
         className={cn("w-6/12 border-2 self-end", preview ? "hidden" : "")}
       />
       <div className="rounded-full flex justify-around items-center h-20 w-fit border-2 bg-[#171717] draggable border-white/40">
-        <div>{}</div>
+        <div
+          onClick={
+            onSources
+              ? () => {
+                  setRecording(true);
+                }
+              : undefined
+          }
+        ></div>
       </div>
     </div>
   );
