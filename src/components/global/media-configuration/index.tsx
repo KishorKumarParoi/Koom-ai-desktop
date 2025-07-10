@@ -32,23 +32,14 @@ const MediaConfiguration = ({ state, user }: Props) => {
   console.log("state.displays", state.displays);
   console.log("state.audioInputs", state.audioInputs);
 
-  if (!user) return null;
-
+  // Provide default values for hook arguments if user is null
   const studio = user?.studio;
   const subscription = user?.subscription;
-  const id = user!.id;
-  const screen = studio?.screen || state.displays?.[0]?.id;
-  const audio = studio?.mic || state.audioInputs?.[0]?.deviceId;
+  const id = user?.id ?? "";
+  const screen = studio?.screen || state.displays?.[0]?.id || "";
+  const audio = studio?.mic || state.audioInputs?.[0]?.deviceId || "";
   const preset = studio?.preset ?? "SD";
   const plan = subscription?.plan ?? "FREE";
-
-  const activeScreen = state.displays?.find(
-    (screen) => screen.id === user?.studio?.screen
-  );
-
-  const activeAudio = state.audioInputs?.find(
-    (device) => device.deviceId === user?.studio?.mic
-  );
 
   const { isPending, onPreset, register } = useStudioSettings(
     id,
@@ -56,6 +47,16 @@ const MediaConfiguration = ({ state, user }: Props) => {
     audio,
     preset,
     plan
+  );
+
+  if (!user) return null;
+
+  const activeScreen = state.displays?.find(
+    (screen) => screen.id === user?.studio?.screen
+  );
+
+  const activeAudio = state.audioInputs?.find(
+    (device) => device.deviceId === user?.studio?.mic
   );
 
   return (
