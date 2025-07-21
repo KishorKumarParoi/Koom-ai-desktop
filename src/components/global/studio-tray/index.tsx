@@ -1,3 +1,4 @@
+import { StartRecording } from "@/lib/recorder";
 import { cn } from "@/lib/utils";
 import { useRef, useState } from "react";
 
@@ -15,7 +16,15 @@ const StudioTray = () => {
       }
     | undefined
   >(undefined);
-  return (
+
+  window.ipcRenderer.on("profile-received", (event, payload) => {
+    console.log(event);
+    setOnSources(payload);
+  });
+
+  return !onSources ? (
+    <></>
+  ) : (
     <div className="flex flex-col justify-end gap-y-5 h-screen draggable">
       <video
         autoPlay
@@ -28,9 +37,14 @@ const StudioTray = () => {
             onSources
               ? () => {
                   setRecording(true);
+                  StartRecording(onSources);
                 }
               : undefined
           }
+          className={cn(
+            "non-draggable rounded-full cursor-pointer relative hover:opacity-80",
+            recording ? "bg-red-500 w-6 h-6" : "bg-red-400 w-8 h-8"
+          )}
         ></div>
       </div>
     </div>
