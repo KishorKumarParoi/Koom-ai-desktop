@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { useRef, useState } from "react";
 
 const StudioTray = () => {
+  const initialTime = new Date();
   const videoElement = useRef<HTMLVideoElement | null>(null);
   const [preview, setPreview] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -22,7 +23,7 @@ const StudioTray = () => {
     setOnSources(payload);
   });
 
-  return !onSources ? (
+  return onSources ? (
     <></>
   ) : (
     <div className="flex flex-col justify-end gap-y-5 h-screen draggable">
@@ -31,7 +32,7 @@ const StudioTray = () => {
         ref={videoElement}
         className={cn("w-6/12 border-2 self-end", preview ? "hidden" : "")}
       />
-      <div className="rounded-full flex justify-around items-center h-20 w-fit border-2 bg-[#171717] draggable border-white/40">
+      <div className="rounded-full flex justify-around items-center h-20 w-ful border-2 bg-[#171717] draggable border-white/40">
         <div
           onClick={
             onSources
@@ -45,7 +46,9 @@ const StudioTray = () => {
             "non-draggable rounded-full cursor-pointer relative hover:opacity-80",
             recording ? "bg-red-500 w-6 h-6" : "bg-red-400 w-8 h-8"
           )}
-        ></div>
+        >
+          kkp
+        </div>
       </div>
     </div>
   );
