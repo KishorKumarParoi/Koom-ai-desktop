@@ -1,12 +1,15 @@
-import { StartRecording } from "@/lib/recorder";
-import { cn } from "@/lib/utils";
-import { useRef, useState } from "react";
+import { onStopRecording, StartRecording } from "@/lib/recorder";
+import { cn, videoRecordingTime } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
 
 const StudioTray = () => {
-  const initialTime = new Date();
   const videoElement = useRef<HTMLVideoElement | null>(null);
   const [preview, setPreview] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [onTimer, setOnTimer] = useState<string>("00:00:00");
+  const [count, setCount] = useState<number>(0);
+  const initialTimeRef = useRef<Date | null>(null);
+
   const [onSources, setOnSources] = useState<
     | {
         screen: string;
@@ -22,6 +25,41 @@ const StudioTray = () => {
     console.log(event);
     setOnSources(payload);
   });
+
+  const clearTime = () => {
+    setOnTimer("00:00:00");
+    setCount(0);
+  };
+
+  useEffect(() => {
+    if (!recording) return;
+    if (!initialTimeRef.current) {
+      initialTimeRef.current = new Date();
+    }
+    const recordTimeInterval = setInterval(() => {
+      if (!initialTimeRef.current) return;
+      const time =
+        count + (new Date().getTime() - initialTimeRef.current.getTime());
+      setCount(time);
+      const recordingTime = videoRecordingTime(time);
+      if (onSources?.plan === "FREE" && recordingTime.minute == "05") {
+        setRecording(false);
+        clearTime();
+        onStopRecording();
+        initialTimeRef.current = null;
+      }
+      setOnTimer(recordingTime.length);
+      if (time <= 0) {
+        setOnTimer("00:00:00");
+        clearInterval(recordTimeInterval);
+        initialTimeRef.current = null;
+      }
+    }, 1);
+    return () => {
+      clearInterval(recordTimeInterval);
+      initialTimeRef.current = null;
+    };
+  }, [count, onSources?.plan, recording]);
 
   return onSources ? (
     <></>
@@ -48,6 +86,11 @@ const StudioTray = () => {
           )}
         >
           kkp
+          {recording && (
+            <span className="absolute  -right-16 top-1/2 transform -translate-y-1/2 text-white">
+              {onTimer}
+            </span>
+          )}
         </div>
       </div>
     </div>
