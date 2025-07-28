@@ -24,3 +24,4 @@ export const StartRecording = (
 };
 
 export const onStopRecording = () => mediaRecorder?.stop();
+
