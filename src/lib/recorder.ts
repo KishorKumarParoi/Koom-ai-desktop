@@ -1,9 +1,12 @@
+import io from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import { hidePluginWindow } from "./utils";
 
 let videoTransferFileName: string | undefined;
 let mediaRecorder: MediaRecorder | undefined;
 let userId: string;
+
+const socket = io(import.meta.env.VITE_SOCKET_URL as string);
 
 export const StartRecording = (
   onSources: {
@@ -24,7 +27,22 @@ export const StartRecording = (
   mediaRecorder.start(1000);
 };
 
+const stopRecording = () => {
+  hidePluginWindow(false);
+  socket.emit("process-video", {
+    filename: videoTransferFileName,
+    userId,
+  });
+};
+
 export const onStopRecording = () => mediaRecorder?.stop();
+
+export const onDataAvailable = (e: BlobEvent) => {
+  socket.emit("video-chunks", {
+    chunks: e.data,
+    filename: videoTransferFileName,
+  });
+};
 
 export const selectSources = async (
   onSources: {
@@ -53,7 +71,7 @@ export const selectSources = async (
 
     userId = onSources.id;
 
-    // Creating the stream
+    // Creating the streamf
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
     // audio & webcam stream
@@ -75,5 +93,8 @@ export const selectSources = async (
     mediaRecorder = new MediaRecorder(combinedStream, {
       mimeType: "video/webm; codecs=vp9",
     });
+
+    mediaRecorder.ondataavailable = onDataAvailable;
+    mediaRecorder.onstop = stopRecording;
   }
 };
