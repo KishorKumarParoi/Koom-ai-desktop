@@ -72,8 +72,18 @@ function createWindow() {
   win.setAlwaysOnTop(true, "screen-saver", 1);
   studio.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   studio.setAlwaysOnTop(true, "screen-saver", 1);
+  floatingWebCam.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  floatingWebCam.setAlwaysOnTop(true, "screen-saver", 1);
   win.webContents.on("did-finish-load", () => {
     win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+  });
+  console.log("Sending profile-received event");
+  win == null ? void 0 : win.webContents.send("profile-received", {
+    screen: "screen-id",
+    id: "user-id",
+    audio: "audio-device-id",
+    preset: "HD",
+    plan: "FREE"
   });
   studio.webContents.on("did-finish-load", () => {
     studio == null ? void 0 : studio.webContents.send(
@@ -131,8 +141,10 @@ ipcMain.handle("getResources", async () => {
   }));
 });
 ipcMain.on("media-sources", (event, payload) => {
-  console.log(event);
-  studio == null ? void 0 : studio.webContents.send("profile-recieved", payload);
+  console.log("EVENT:✅🎮  media sources", payload);
+  studio == null ? void 0 : studio.webContents.send("profile-received", payload);
+  console.log("Main received media-sources:", payload);
+  event.sender.send("profile-received", payload);
 });
 ipcMain.on("resize-studio", (event, payload) => {
   console.log(event);

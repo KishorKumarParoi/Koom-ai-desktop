@@ -38,6 +38,7 @@ const stopRecording = () => {
 export const onStopRecording = () => mediaRecorder?.stop();
 
 export const onDataAvailable = (e: BlobEvent) => {
+  alert("Running....");
   socket.emit("video-chunks", {
     chunks: e.data,
     filename: videoTransferFileName,
@@ -66,6 +67,7 @@ export const selectSources = async (
       prevStream.getTracks().forEach((track) => track.stop());
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const constraints: any = {
       audio: false,
       video: {
@@ -102,12 +104,8 @@ export const selectSources = async (
         ...audioStream.getTracks(),
       ]);
 
-      mediaRecorder = new MediaRecorder(combinedStream, {
-        mimeType: "video/webm; codecs=vp9",
-      });
-
-      mediaRecorder.ondataavailable = onDataAvailable;
-      mediaRecorder.onstop = stopRecording;
+      // Return the combined stream
+      return combinedStream;
     } catch (error) {
       console.error("Error setting up media sources:", error);
     }

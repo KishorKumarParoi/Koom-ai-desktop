@@ -34,7 +34,6 @@ const StudioTray = () => {
     };
   }, []);
 
-  // Fix: Proper cleanup
   useEffect(() => {
     if (onSources && onSources.screen && onSources.audio) {
       selectSources(onSources, videoElement);
@@ -84,9 +83,9 @@ const StudioTray = () => {
       clearInterval(recordTimeInterval);
       initialTimeRef.current = null;
     };
-  }, [count, onSources?.plan, recording]);
+  }, [recording]);
 
-  return !onSources ? (
+  return onSources ? (
     <div className="flex flex-col justify-end gap-y-5 h-screen draggable">
       {preview && (
         <video

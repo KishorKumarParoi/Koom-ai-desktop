@@ -14,14 +14,11 @@ const useStudioSettings = (
 ) => {
   const [onPreset, setPreset] = useState<"HD" | "SD" | "undefined">();
 
-  const { register, errors, handleSubmit, watch, reset } = useZodForm(
-    updateStudioSettingsSchema,
-    {
-      screen: screen!,
-      audio: audio!,
-      preset: preset!,
-    }
-  );
+  const { register, watch } = useZodForm(updateStudioSettingsSchema, {
+    screen: screen!,
+    audio: audio!,
+    preset: preset!,
+  });
 
   const { mutate, isPending } = useMutation({
     mutationKey: ["update-studio"],
@@ -50,7 +47,7 @@ const useStudioSettings = (
         plan,
       });
     }
-  }, [audio, id, plan, preset, screen]);
+  }, [audio, screen]);
 
   useEffect(() => {
     const subscribe = watch((values) => {
@@ -74,7 +71,7 @@ const useStudioSettings = (
     return () => {
       subscribe.unsubscribe();
     };
-  }, [id, mutate, plan, watch]);
+  }, [watch]);
 
   return { register, isPending, onPreset };
 };
