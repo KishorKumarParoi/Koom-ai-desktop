@@ -54,12 +54,24 @@ export const selectSources = async (
   videoElement: React.RefObject<HTMLVideoElement>
 ) => {
   if (onSources && onSources.screen && onSources.audio && onSources.id) {
+    // Clean up previous recorder
+    if (mediaRecorder) {
+      mediaRecorder.stop();
+      mediaRecorder = undefined;
+    }
+
+    // Clean up previous video stream
+    if (videoElement?.current?.srcObject) {
+      const prevStream = videoElement.current.srcObject as MediaStream;
+      prevStream.getTracks().forEach((track) => track.stop());
+    }
+
     const constraints: any = {
       audio: false,
       video: {
         mandatory: {
           chromeMediaSource: "desktop",
-          chromeMediaSourceId: onSources?.screen,
+          chromeMediaSourceId: onSources.screen,
           minWidth: onSources.preset === "HD" ? 1920 : 1280,
           maxWidth: onSources.preset === "HD" ? 1920 : 1280,
           maxHeight: onSources.preset === "HD" ? 1080 : 720,
@@ -71,30 +83,33 @@ export const selectSources = async (
 
     userId = onSources.id;
 
-    // Creating the streamf
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const audioStream = await navigator.mediaDevices.getUserMedia({
+        video: false,
+        audio: onSources.audio
+          ? { deviceId: { exact: onSources.audio } }
+          : false,
+      });
 
-    // audio & webcam stream
-    const audioStream = await navigator.mediaDevices.getUserMedia({
-      video: false,
-      audio: onSources.audio ? { deviceId: { exact: onSources.audio } } : false,
-    });
+      if (videoElement && videoElement.current) {
+        videoElement.current.srcObject = stream;
+        await videoElement.current.play();
+      }
 
-    if (videoElement && videoElement.current) {
-      videoElement.current.srcObject = stream;
-      await videoElement.current.play();
+      const combinedStream = new MediaStream([
+        ...stream.getTracks(),
+        ...audioStream.getTracks(),
+      ]);
+
+      mediaRecorder = new MediaRecorder(combinedStream, {
+        mimeType: "video/webm; codecs=vp9",
+      });
+
+      mediaRecorder.ondataavailable = onDataAvailable;
+      mediaRecorder.onstop = stopRecording;
+    } catch (error) {
+      console.error("Error setting up media sources:", error);
     }
-
-    const combinedStream = new MediaStream([
-      ...stream.getTracks(),
-      ...audioStream.getTracks(),
-    ]);
-
-    mediaRecorder = new MediaRecorder(combinedStream, {
-      mimeType: "video/webm; codecs=vp9",
-    });
-
-    mediaRecorder.ondataavailable = onDataAvailable;
-    mediaRecorder.onstop = stopRecording;
   }
 };

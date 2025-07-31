@@ -1,4 +1,4 @@
-import { onStopRecording, StartRecording } from "@/lib/recorder";
+import { onStopRecording, selectSources, StartRecording } from "@/lib/recorder";
 import { cn, videoRecordingTime } from "@/lib/utils";
 import { Cast, Pause, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -10,7 +10,6 @@ const StudioTray = () => {
   const [onTimer, setOnTimer] = useState<string>("00:00:00");
   const [count, setCount] = useState<number>(0);
   const initialTimeRef = useRef<Date | null>(null);
-
   const [onSources, setOnSources] = useState<
     | {
         screen: string;
@@ -22,10 +21,35 @@ const StudioTray = () => {
     | undefined
   >(undefined);
 
-  window.ipcRenderer.on("profile-received", (event, payload) => {
-    console.log(event);
-    setOnSources(payload);
-  });
+  useEffect(() => {
+    const handleProfileReceived = (event, payload) => {
+      console.log(event);
+      setOnSources(payload);
+    };
+
+    window.ipcRenderer.on("profile-received", handleProfileReceived);
+
+    return () => {
+      window.ipcRenderer.off("profile-received", handleProfileReceived);
+    };
+  }, []);
+
+  // Fix: Proper cleanup
+  useEffect(() => {
+    if (onSources && onSources.screen && onSources.audio) {
+      selectSources(onSources, videoElement);
+    }
+
+    // Copy the ref value to a local variable for cleanup
+    const currentVideoElement = videoElement.current;
+
+    return () => {
+      if (currentVideoElement?.srcObject) {
+        const stream = currentVideoElement.srcObject as MediaStream;
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [onSources?.screen, onSources?.audio, onSources?.preset, onSources]);
 
   const clearTime = () => {
     setOnTimer("00:00:00");
@@ -62,9 +86,7 @@ const StudioTray = () => {
     };
   }, [count, onSources?.plan, recording]);
 
-  return onSources ? (
-    <></>
-  ) : (
+  return !onSources ? (
     <div className="flex flex-col justify-end gap-y-5 h-screen draggable">
       {preview && (
         <video
@@ -125,6 +147,8 @@ const StudioTray = () => {
         />
       </div>
     </div>
+  ) : (
+    <div>Loading sources...</div>
   );
 };
 
