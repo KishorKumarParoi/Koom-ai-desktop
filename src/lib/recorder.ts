@@ -8,13 +8,19 @@ let userId: string;
 
 const socket = io(import.meta.env.VITE_SOCKET_URL as string);
 
-export const StartRecording = (onSources: {
-  screen: string;
-  audio: string;
-  id: string;
-}) => {
+export const StartRecording = (
+  onSources: {
+    screen: string;
+    audio: string;
+    id: string;
+  },
+  stream: MediaStream
+) => {
   hidePluginWindow(true);
   videoTransferFileName = `${uuid()}-${onSources?.id.slice(0, 8)}.webm`;
+  if (!stream) {
+    console.log("There is no stream");
+  }
   mediaRecorder.start(1000);
 };
 
@@ -44,7 +50,7 @@ export const selectSources = async (
     preset: "HD" | "SD";
   },
   videoElement: React.RefObject<HTMLVideoElement>
-) => {
+): Promise<MediaStream | null> => {
   if (onSources && onSources.screen && onSources.audio && onSources.id) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const constraints: any = {
@@ -89,8 +95,10 @@ export const selectSources = async (
 
       mediaRecorder.ondataavailable = onDataAvailable;
       mediaRecorder.onstop = stopRecording;
+      return combinedStream;
     } catch (error) {
       console.error("Error setting up media sources:", error);
     }
   }
+  return null;
 };
