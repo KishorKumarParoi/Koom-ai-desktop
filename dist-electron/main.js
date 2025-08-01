@@ -77,14 +77,6 @@ function createWindow() {
   win.webContents.on("did-finish-load", () => {
     win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
   });
-  console.log("Sending profile-received event");
-  win == null ? void 0 : win.webContents.send("profile-received", {
-    screen: "screen-id",
-    id: "user-id",
-    audio: "audio-device-id",
-    preset: "HD",
-    plan: "FREE"
-  });
   studio.webContents.on("did-finish-load", () => {
     studio == null ? void 0 : studio.webContents.send(
       "main-process-message",
@@ -126,7 +118,6 @@ ipcMain.handle("getSources", async () => {
     fetchWindowIcons: true,
     types: ["window", "screen"]
   });
-  console.log("✅ Data: ", data);
   return data;
 });
 ipcMain.handle("getResources", async () => {
@@ -140,14 +131,11 @@ ipcMain.handle("getResources", async () => {
     appIcon: source.appIcon ? source.appIcon.toDataURL() : null
   }));
 });
-ipcMain.on("media-sources", (event, payload) => {
+ipcMain.on("media-sources", (_, payload) => {
   console.log("EVENT:✅🎮  media sources", payload);
   studio == null ? void 0 : studio.webContents.send("profile-received", payload);
-  console.log("Main received media-sources:", payload);
-  event.sender.send("profile-received", payload);
 });
-ipcMain.on("resize-studio", (event, payload) => {
-  console.log(event);
+ipcMain.on("resize-studio", (_, payload) => {
   if (payload.shrink) {
     studio == null ? void 0 : studio.setSize(400, 100);
   }
@@ -155,8 +143,7 @@ ipcMain.on("resize-studio", (event, payload) => {
     studio == null ? void 0 : studio.setSize(400, 250);
   }
 });
-ipcMain.on("hide-plugin", (event, payload) => {
-  console.log(event);
+ipcMain.on("hide-plugin", (_, payload) => {
   win == null ? void 0 : win.webContents.send("hide-plugin", payload);
 });
 app.on("activate", () => {

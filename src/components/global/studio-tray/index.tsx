@@ -4,7 +4,6 @@ import { Cast, Pause, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const StudioTray = () => {
-  const videoElement = useRef<HTMLVideoElement | null>(null);
   const [preview, setPreview] = useState(false);
   const [recording, setRecording] = useState(false);
   const [onTimer, setOnTimer] = useState<string>("00:00:00");
@@ -21,39 +20,26 @@ const StudioTray = () => {
     | undefined
   >(undefined);
 
-  useEffect(() => {
-    const handleProfileReceived = (event, payload) => {
-      console.log(event);
-      setOnSources(payload);
-    };
-
-    window.ipcRenderer.on("profile-received", handleProfileReceived);
-
-    return () => {
-      window.ipcRenderer.off("profile-received", handleProfileReceived);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (onSources && onSources.screen && onSources.audio) {
-      selectSources(onSources, videoElement);
-    }
-
-    // Copy the ref value to a local variable for cleanup
-    const currentVideoElement = videoElement.current;
-
-    return () => {
-      if (currentVideoElement?.srcObject) {
-        const stream = currentVideoElement.srcObject as MediaStream;
-        stream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [onSources?.screen, onSources?.audio, onSources?.preset, onSources]);
-
   const clearTime = () => {
     setOnTimer("00:00:00");
     setCount(0);
   };
+
+  window.ipcRenderer.on("profile-received", (_, payload) => {
+    console.log("Running on Studio-Tray💻: ", payload);
+    setOnSources(payload);
+  });
+
+  const videoElement = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (onSources && onSources.screen) {
+      selectSources(onSources, videoElement);
+    }
+    return () => {
+      selectSources(onSources!, videoElement);
+    };
+  }, [onSources]);
 
   useEffect(() => {
     if (!recording) return;

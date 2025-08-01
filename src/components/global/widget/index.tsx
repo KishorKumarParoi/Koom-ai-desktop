@@ -33,8 +33,8 @@ const Widget = () => {
   const { user } = useUser();
   const { state, fetchMediaResources } = useMediaSources();
 
-  console.log("state", state);
-  console.log("fetchMediaResources: ", fetchMediaResources);
+  // console.log("state", state);
+  // console.log("fetchMediaResources: ", fetchMediaResources);
 
   useEffect(() => {
     if (user && user.id) {

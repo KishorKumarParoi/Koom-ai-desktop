@@ -13,6 +13,8 @@ const useStudioSettings = (
   plan?: "PRO" | "FREE"
 ) => {
   const [onPreset, setPreset] = useState<"HD" | "SD" | "undefined">();
+  const [onAudio, setAudio] = useState<string | null>(null);
+  const [onScreen, setScreen] = useState<string | null>(null);
 
   const { register, watch } = useZodForm(updateStudioSettingsSchema, {
     screen: screen!,
@@ -37,8 +39,7 @@ const useStudioSettings = (
 
   useEffect(() => {
     if (screen && audio) {
-      console.log("Run UseEffect");
-      console.log(screen, audio, preset);
+      console.log("Run UseEffect: ", screen, audio, preset);
       window.ipcRenderer.send("media-sources", {
         screen,
         id,
@@ -52,6 +53,9 @@ const useStudioSettings = (
   useEffect(() => {
     const subscribe = watch((values) => {
       setPreset(values.preset);
+      setAudio(values.audio!);
+      setScreen(values.screen!);
+
       mutate({
         screen: values.screen!,
         id,
@@ -73,7 +77,7 @@ const useStudioSettings = (
     };
   }, [watch]);
 
-  return { register, isPending, onPreset };
+  return { register, isPending, onPreset, onAudio, onScreen };
 };
 
 export default useStudioSettings;

@@ -3,29 +3,22 @@ import { v4 as uuid } from "uuid";
 import { hidePluginWindow } from "./utils";
 
 let videoTransferFileName: string | undefined;
-let mediaRecorder: MediaRecorder | undefined;
+let mediaRecorder: MediaRecorder;
 let userId: string;
 
 const socket = io(import.meta.env.VITE_SOCKET_URL as string);
 
-export const StartRecording = (
-  onSources: {
-    screen: string;
-    audio: string;
-    id: string;
-  },
-  mediaStream?: MediaStream
-) => {
+export const StartRecording = (onSources: {
+  screen: string;
+  audio: string;
+  id: string;
+}) => {
   hidePluginWindow(true);
   videoTransferFileName = `${uuid()}-${onSources?.id.slice(0, 8)}.webm`;
-  if (!mediaRecorder) {
-    if (!mediaStream) {
-      throw new Error("MediaStream is required to initialize MediaRecorder.");
-    }
-    mediaRecorder = new MediaRecorder(mediaStream);
-  }
   mediaRecorder.start(1000);
 };
+
+export const onStopRecording = () => mediaRecorder?.stop();
 
 const stopRecording = () => {
   hidePluginWindow(false);
@@ -35,10 +28,8 @@ const stopRecording = () => {
   });
 };
 
-export const onStopRecording = () => mediaRecorder?.stop();
-
 export const onDataAvailable = (e: BlobEvent) => {
-  alert("Running....");
+  console.log("Running....");
   socket.emit("video-chunks", {
     chunks: e.data,
     filename: videoTransferFileName,
@@ -55,18 +46,6 @@ export const selectSources = async (
   videoElement: React.RefObject<HTMLVideoElement>
 ) => {
   if (onSources && onSources.screen && onSources.audio && onSources.id) {
-    // Clean up previous recorder
-    if (mediaRecorder) {
-      mediaRecorder.stop();
-      mediaRecorder = undefined;
-    }
-
-    // Clean up previous video stream
-    if (videoElement?.current?.srcObject) {
-      const prevStream = videoElement.current.srcObject as MediaStream;
-      prevStream.getTracks().forEach((track) => track.stop());
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const constraints: any = {
       audio: false,
@@ -89,7 +68,7 @@ export const selectSources = async (
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       const audioStream = await navigator.mediaDevices.getUserMedia({
         video: false,
-        audio: onSources.audio
+        audio: onSources?.audio
           ? { deviceId: { exact: onSources.audio } }
           : false,
       });
@@ -104,8 +83,12 @@ export const selectSources = async (
         ...audioStream.getTracks(),
       ]);
 
-      // Return the combined stream
-      return combinedStream;
+      mediaRecorder = new MediaRecorder(combinedStream, {
+        mimeType: "video/webm; codecs=vp9",
+      });
+
+      mediaRecorder.ondataavailable = onDataAvailable;
+      mediaRecorder.onstop = stopRecording;
     } catch (error) {
       console.error("Error setting up media sources:", error);
     }

@@ -20,15 +20,13 @@ export const fetchUserProfile = async (clerkId: string) => {
       "Content-Type": "application/json",
     },
   });
-  console.log("Response: ", response);
+  // console.log("Response: ", response);
   return response.data;
 };
 
 export const getMediaSources = async () => {
-  console.log("Hello....😀");
   // 1. Get display sources from main process (make sure main process handles "getResources")
   const displays = await window.ipcRenderer.invoke("getResources");
-  console.log("Displays: ", displays);
 
   // 2. Request audio permission before enumerateDevices
   try {

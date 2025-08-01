@@ -101,15 +101,6 @@ function createWindow() {
     win?.webContents.send("main-process-message", new Date().toLocaleString());
   });
 
-  console.log("Sending profile-received event");
-  win?.webContents.send("profile-received", {
-    screen: "screen-id",
-    id: "user-id",
-    audio: "audio-device-id",
-    preset: "HD",
-    plan: "FREE",
-  });
-
   studio.webContents.on("did-finish-load", () => {
     studio?.webContents.send(
       "main-process-message",
@@ -159,7 +150,7 @@ ipcMain.handle("getSources", async () => {
     fetchWindowIcons: true,
     types: ["window", "screen"],
   });
-  console.log("✅ Data: ", data);
+  // console.log("✅ Data: ", data);
   return data;
 });
 
@@ -175,16 +166,16 @@ ipcMain.handle("getResources", async () => {
   }));
 });
 
-ipcMain.on("media-sources", (event, payload) => {
+ipcMain.on("media-sources", (_, payload) => {
   console.log("EVENT:✅🎮  media sources", payload);
   studio?.webContents.send("profile-received", payload);
 
-  console.log("Main received media-sources:", payload);
-  event.sender.send("profile-received", payload);
+  // console.log("Main received media-sources:", payload);
+  // event.sender.send("profile-received", payload);
 });
 
-ipcMain.on("resize-studio", (event, payload) => {
-  console.log(event);
+ipcMain.on("resize-studio", (_, payload) => {
+  // console.log(event);
   if (payload.shrink) {
     studio?.setSize(400, 100);
   }
@@ -193,8 +184,8 @@ ipcMain.on("resize-studio", (event, payload) => {
   }
 });
 
-ipcMain.on("hide-plugin", (event, payload) => {
-  console.log(event);
+ipcMain.on("hide-plugin", (_, payload) => {
+  // console.log(event);
   win?.webContents.send("hide-plugin", payload);
 });
 
