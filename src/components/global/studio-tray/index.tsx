@@ -1,6 +1,6 @@
 import { onStopRecording, selectSources, StartRecording } from "@/lib/recorder";
 import { cn, videoRecordingTime } from "@/lib/utils";
-import { Cast, Maximize, Pause, PictureInPicture2, Square } from "lucide-react";
+import { Cast, Pause, PictureInPicture2, Square } from "lucide-react";
 import { SetStateAction, useEffect, useRef, useState } from "react";
 
 const StudioTray = () => {
@@ -25,7 +25,6 @@ const StudioTray = () => {
   >(undefined);
 
   const [isPiP, setIsPiP] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const clearTime = () => {
     setOnTimer("00:00:00");
@@ -48,25 +47,6 @@ const StudioTray = () => {
       }
     } catch (error) {
       console.error("PiP error:", error);
-    }
-  };
-
-  const toggleFullscreen = async () => {
-    if (!videoElement.current) {
-      console.error("Video element not available");
-      return;
-    }
-
-    try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-        console.log("Exited fullscreen");
-      } else {
-        await videoElement.current.requestFullscreen();
-        console.log("Entered fullscreen");
-      }
-    } catch (error) {
-      console.error("Fullscreen error:", error);
     }
   };
 
@@ -95,15 +75,6 @@ const StudioTray = () => {
     };
   }, []);
 
-  // useEffect(() => {
-  //   if (onSources && onSources.screen) {
-  //     selectSources(onSources, videoElement);
-  //   }
-  //   return () => {
-  //     selectSources(onSources!, videoElement);
-  //   };
-  // }, [onSources]);
-
   useEffect(() => {
     const setupSources = async () => {
       if (preview && onSources && onSources.screen && onSources.audio) {
@@ -119,7 +90,7 @@ const StudioTray = () => {
         } catch (error) {
           console.error("Error setting up sources:", error);
         }
-      } else if (preview && combinedStream) {
+      } else if (!preview && combinedStream) {
         console.log("🛑 Cleaning up preview stream...");
         combinedStream.getTracks().forEach((track) => track.stop());
         setCombinedStream(null);
@@ -158,7 +129,7 @@ const StudioTray = () => {
 
       const recordingTime = videoRecordingTime(time);
 
-      if (onSources?.plan === "FREE" && recordingTime.minute == "05") {
+      if (onSources?.plan === "FREE" && recordingTime.minute === "05") {
         setRecording(false);
         clearTime();
         onStopRecording();
@@ -166,54 +137,34 @@ const StudioTray = () => {
       }
 
       setOnTimer(recordingTime.length);
-
-      if (time <= 0) {
-        setOnTimer("00:00:00");
-        clearInterval(recordTimeInterval);
-        initialTimeRef.current = null;
-      }
     }, 1000);
+
     return () => {
       clearInterval(recordTimeInterval);
       initialTimeRef.current = null;
     };
-  }, [recording]);
+  }, [recording, count, onSources?.plan]);
 
+  // ✅ Updated event listeners for PiP only
   useEffect(() => {
     const handlePiPChange = () => {
       setIsPiP(!!document.pictureInPictureElement);
+      console.log("PiP state changed:", !!document.pictureInPictureElement);
     };
 
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
+    // Only listen for PiP events
     document.addEventListener("enterpictureinpicture", handlePiPChange);
     document.addEventListener("leavepictureinpicture", handlePiPChange);
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
       document.removeEventListener("enterpictureinpicture", handlePiPChange);
       document.removeEventListener("leavepictureinpicture", handlePiPChange);
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && isFullscreen) {
-        toggleFullscreen();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyPress);
-    return () => {
-      document.removeEventListener("keydown", handleKeyPress);
-    };
-  }, [isFullscreen]);
-
   return onSources ? (
     <div className="flex flex-col justify-end gap-y-5 h-screen draggable">
+      {/* ✅ Regular Preview */}
       {preview && (
         <div className="relative w-6/12 self-end">
           <video
@@ -225,7 +176,7 @@ const StudioTray = () => {
               "shadow-lg"
             )}
             // style={{
-            //   transform: "scaleX(-1)",
+            //   transform: "scaleX(-1)", // ✅ Mirror effect for better preview
             // }}
           />
 
@@ -241,43 +192,38 @@ const StudioTray = () => {
                 className={isPiP ? "text-green-400" : "text-white"}
               />
             </button>
-            <button
-              onClick={toggleFullscreen}
-              className="non-draggable bg-black/50 hover:bg-black/70 cursor-pointer text-white p-2 rounded-lg transition-all"
-              title="Fullscreen"
-            >
-              <Maximize
-                size={16}
-                className={isFullscreen ? "text-green-400" : "text-white"}
-              />
-            </button>
           </div>
         </div>
       )}
 
+      {/* ✅ Studio Tray Controls */}
       <div className="rounded-full flex justify-around items-center h-20 w-full border-2 bg-[#171717] draggable border-white/40">
+        {/* Record Button */}
         <div
           onClick={() => {
             if (onSources && combinedStream) {
               setRecording(true);
-              StartRecording(onSources, combinedStream); // Pass the combined stream
+              StartRecording(onSources, combinedStream);
               console.log("Recording started");
             } else {
               console.error("No sources or stream available");
             }
           }}
           className={cn(
-            "non-draggable rounded-full cursor-pointer relative hover:opacity-80",
-            recording ? "bg-red-500 w-6 h-6" : "bg-red-400 w-8 h-8"
+            "non-draggable rounded-full cursor-pointer relative hover:opacity-80 transition-all",
+            recording
+              ? "bg-red-500 w-6 h-6 animate-pulse"
+              : "bg-red-400 w-8 h-8"
           )}
         >
           {recording && (
-            <span className="absolute  -right-16 top-1/2 transform -translate-y-1/2 text-white">
+            <span className="absolute -right-16 top-1/2 transform -translate-y-1/2 text-white text-sm font-mono">
               {onTimer}
             </span>
           )}
         </div>
 
+        {/* Pause/Stop Button */}
         {!recording ? (
           <Pause
             className="non-draggable opacity-50"
@@ -294,13 +240,21 @@ const StudioTray = () => {
               setRecording(false);
               clearTime();
               onStopRecording();
+              console.log("Recording stopped");
             }}
             stroke="white"
           />
         )}
 
+        {/* Cast Button */}
         <Cast
-          onClick={() => setPreview((prev) => !prev)}
+          onClick={() => {
+            setPreview((prev) => {
+              const newPreview = !prev;
+              console.log(`📺 Preview ${newPreview ? "enabled" : "disabled"}`);
+              return newPreview;
+            });
+          }}
           size={32}
           fill={preview ? "#10B981" : "white"}
           className="non-draggable cursor-pointer hover:opacity-60 transition-all"
