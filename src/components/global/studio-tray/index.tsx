@@ -71,45 +71,6 @@ const StudioTray = () => {
   };
 
   useEffect(() => {
-    const handlePiPChange = () => {
-      setIsPiP(!!document.pictureInPictureElement);
-    };
-
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener("enterpictureinpicture", handlePiPChange);
-    document.addEventListener("leavepictureinpicture", handlePiPChange);
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-
-    return () => {
-      document.removeEventListener("enterpictureinpicture", handlePiPChange);
-      document.removeEventListener("leavepictureinpicture", handlePiPChange);
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && isFullscreen) {
-        toggleFullscreen();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyPress);
-    return () => {
-      document.removeEventListener("keydown", handleKeyPress);
-    };
-  }, [isFullscreen]);
-
-  useEffect(() => {
-    console.log("🎬 Preview state:", preview);
-    console.log("📱 PiP state:", isPiP);
-    console.log("🖥️ Fullscreen state:", isFullscreen);
-  }, [preview, isPiP, isFullscreen]);
-
-  useEffect(() => {
     const handleProfileReceived = (
       _: any,
       payload: SetStateAction<
@@ -145,7 +106,7 @@ const StudioTray = () => {
 
   useEffect(() => {
     const setupSources = async () => {
-      if (onSources && onSources.screen && onSources.audio) {
+      if (preview && onSources && onSources.screen && onSources.audio) {
         try {
           // Clean up previous streams
           if (combinedStream) {
@@ -157,6 +118,15 @@ const StudioTray = () => {
           console.log("Sources setup successfully, preview ready");
         } catch (error) {
           console.error("Error setting up sources:", error);
+        }
+      } else if (preview && combinedStream) {
+        console.log("🛑 Cleaning up preview stream...");
+        combinedStream.getTracks().forEach((track) => track.stop());
+        setCombinedStream(null);
+
+        // Clear video element
+        if (videoElement.current) {
+          videoElement.current.srcObject = null;
         }
       }
     };
@@ -170,7 +140,7 @@ const StudioTray = () => {
         stream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [onSources?.screen, onSources?.audio, onSources?.preset]);
+  }, [onSources?.screen, onSources?.audio, onSources?.preset, preview]);
 
   useEffect(() => {
     if (!recording) return;
@@ -208,6 +178,39 @@ const StudioTray = () => {
       initialTimeRef.current = null;
     };
   }, [recording]);
+
+  useEffect(() => {
+    const handlePiPChange = () => {
+      setIsPiP(!!document.pictureInPictureElement);
+    };
+
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("enterpictureinpicture", handlePiPChange);
+    document.addEventListener("leavepictureinpicture", handlePiPChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("enterpictureinpicture", handlePiPChange);
+      document.removeEventListener("leavepictureinpicture", handlePiPChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && isFullscreen) {
+        toggleFullscreen();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyPress);
+    return () => {
+      document.removeEventListener("keydown", handleKeyPress);
+    };
+  }, [isFullscreen]);
 
   return onSources ? (
     <div className="flex flex-col justify-end gap-y-5 h-screen draggable">
@@ -249,32 +252,6 @@ const StudioTray = () => {
               />
             </button>
           </div>
-          {/* Fullscreen Exit Hint */}
-          {isFullscreen && (
-            <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
-              <video
-                autoPlay
-                muted
-                ref={videoElement}
-                className="w-full h-full object-contain"
-              />
-
-              {/* Custom Exit Button */}
-              <button
-                onClick={toggleFullscreen}
-                className="absolute top-4 right-4 non-draggable bg-black/50 hover:bg-black/70 cursor-pointer text-white p-3 rounded-lg transition-all z-10"
-                title="Exit Fullscreen"
-              >
-                ❌
-              </button>
-
-              {/* Exit Instructions */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg text-center">
-                Press <kbd className="bg-white/20 px-2 py-1 rounded">ESC</kbd>{" "}
-                or click ❌ to exit fullscreen
-              </div>
-            </div>
-          )}
         </div>
       )}
 
