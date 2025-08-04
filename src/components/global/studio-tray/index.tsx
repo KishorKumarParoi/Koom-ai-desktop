@@ -1,10 +1,18 @@
 import { onStopRecording, selectSources, StartRecording } from "@/lib/recorder";
 import { cn, videoRecordingTime } from "@/lib/utils";
-import { Cast, Pause, PictureInPicture2, Square } from "lucide-react";
+import {
+  Cast,
+  Maximize,
+  Pause,
+  PictureInPicture2,
+  Square,
+  X,
+} from "lucide-react";
 import { SetStateAction, useEffect, useRef, useState } from "react";
 
 const StudioTray = () => {
   const videoElement = useRef<HTMLVideoElement | null>(null);
+  const fullscreenVideoElement = useRef<HTMLVideoElement | null>(null);
   const [preview, setPreview] = useState(false);
   const [recording, setRecording] = useState(false);
   const [onTimer, setOnTimer] = useState<string>("00:00:00");
@@ -13,6 +21,10 @@ const StudioTray = () => {
   const [combinedStream, setCombinedStream] = useState<MediaStream | null>(
     null
   );
+
+  // ✅ Add muted state for proper React state management
+  const [isMuted, setIsMuted] = useState(true); // Start muted (default for autoplay)
+
   const [onSources, setOnSources] = useState<
     | {
         screen: string;
@@ -26,18 +38,17 @@ const StudioTray = () => {
 
   const [isPiP, setIsPiP] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Mouse movement handler
   const handleMouseMove = () => {
     setShowControls(true);
 
-    // clear existing timeout
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
     }
 
-    // hide controle after 3 seconds of no movement
     controlsTimeoutRef.current = setTimeout(() => setShowControls(false), 3000);
   };
 
@@ -46,8 +57,28 @@ const StudioTray = () => {
     setCount(0);
   };
 
+  // ✅ Enhanced toggle mute function
+  const toggleMute = () => {
+    const newMutedState = !isMuted;
+    setIsMuted(newMutedState);
+
+    // Apply to both video elements
+    if (videoElement.current) {
+      videoElement.current.muted = newMutedState;
+    }
+    if (fullscreenVideoElement.current) {
+      fullscreenVideoElement.current.muted = newMutedState;
+    }
+
+    console.log(`Video ${newMutedState ? "muted" : "unmuted"}`);
+  };
+
   const togglePiP = async () => {
-    if (!videoElement.current) {
+    const currentVideo = isFullscreen
+      ? fullscreenVideoElement.current
+      : videoElement.current;
+
+    if (!currentVideo) {
       console.error("Video element not available");
       return;
     }
@@ -57,11 +88,67 @@ const StudioTray = () => {
         await document.exitPictureInPicture();
         console.log("Exited Picture-in-Picture");
       } else {
-        await videoElement.current.requestPictureInPicture();
+        await currentVideo.requestPictureInPicture();
         console.log("Entered Picture-in-Picture");
       }
     } catch (error) {
       console.error("PiP error:", error);
+    }
+  };
+
+  // ✅ Enhanced fullscreen toggle function with immediate state management
+  const toggleFullscreen = async () => {
+    try {
+      if (isFullscreen) {
+        // ✅ Immediately set state to false to hide black container
+        setIsFullscreen(false);
+
+        // Then exit fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) {
+          await (document as any).mozCancelFullScreen();
+        } else if ((document as any).msExitFullscreen) {
+          await (document as any).msExitFullscreen();
+        }
+        console.log("Requesting fullscreen exit");
+      } else {
+        // Enter fullscreen - Set state first to render container
+        setIsFullscreen(true);
+
+        // Wait for DOM update then request fullscreen on container
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        const fullscreenContainer = document.querySelector(
+          ".fullscreen-container"
+        ) as any;
+
+        if (fullscreenContainer) {
+          try {
+            if (fullscreenContainer.requestFullscreen) {
+              await fullscreenContainer.requestFullscreen();
+            } else if (fullscreenContainer.webkitRequestFullscreen) {
+              await fullscreenContainer.webkitRequestFullscreen();
+            } else if (fullscreenContainer.mozRequestFullScreen) {
+              await fullscreenContainer.mozRequestFullScreen();
+            } else if (fullscreenContainer.msRequestFullscreen) {
+              await fullscreenContainer.msRequestFullscreen();
+            }
+            console.log("Fullscreen requested successfully");
+          } catch (error) {
+            console.error("Fullscreen request failed:", error);
+            setIsFullscreen(false); // Reset if fullscreen fails
+          }
+        } else {
+          console.error("Fullscreen container not found");
+          setIsFullscreen(false);
+        }
+      }
+    } catch (error) {
+      console.error("Fullscreen error:", error);
+      setIsFullscreen(false);
     }
   };
 
@@ -90,6 +177,7 @@ const StudioTray = () => {
     };
   }, []);
 
+  // ✅ Enhanced setupSources effect
   useEffect(() => {
     const setupSources = async () => {
       if (preview && onSources && onSources.screen && onSources.audio) {
@@ -110,23 +198,33 @@ const StudioTray = () => {
         combinedStream.getTracks().forEach((track) => track.stop());
         setCombinedStream(null);
 
-        // Clear video element
+        // Clear both video elements
         if (videoElement.current) {
           videoElement.current.srcObject = null;
+        }
+        if (fullscreenVideoElement.current) {
+          fullscreenVideoElement.current.srcObject = null;
         }
       }
     };
 
     setupSources();
-
-    // Cleanup function
-    return () => {
-      if (videoElement.current?.srcObject) {
-        const stream = videoElement.current.srcObject as MediaStream;
-        stream.getTracks().forEach((track) => track.stop());
-      }
-    };
   }, [onSources?.screen, onSources?.audio, onSources?.preset, preview]);
+
+  // ✅ Enhanced video stream assignment with mute state sync
+  useEffect(() => {
+    if (combinedStream) {
+      // Assign stream to current video element
+      if (videoElement.current) {
+        videoElement.current.srcObject = combinedStream;
+        videoElement.current.muted = isMuted; // Sync mute state
+      }
+      if (fullscreenVideoElement.current) {
+        fullscreenVideoElement.current.srcObject = combinedStream;
+        fullscreenVideoElement.current.muted = isMuted; // Sync mute state
+      }
+    }
+  }, [combinedStream, isFullscreen, isMuted]);
 
   useEffect(() => {
     if (!recording) return;
@@ -160,31 +258,78 @@ const StudioTray = () => {
     };
   }, [recording, count, onSources?.plan]);
 
-  // ✅ Updated event listeners for PiP only
+  // ✅ Enhanced event listeners with debouncing
   useEffect(() => {
     const handlePiPChange = () => {
       setIsPiP(!!document.pictureInPictureElement);
       console.log("PiP state changed:", !!document.pictureInPictureElement);
     };
 
-    // Only listen for PiP events
+    // ✅ Simplified fullscreen change handler
+    const handleFullscreenChange = () => {
+      const fullscreenElement =
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement;
+
+      // ✅ Only sync state if browser fullscreen is active but React state is false
+      // This handles cases where fullscreen was triggered by other means (F11, etc.)
+      if (!!fullscreenElement && !isFullscreen) {
+        console.log("Browser entered fullscreen externally");
+        setIsFullscreen(true);
+      } else if (!fullscreenElement && isFullscreen) {
+        console.log("Browser exited fullscreen externally (ESC key)");
+        setIsFullscreen(false);
+      }
+    };
+
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && isFullscreen) {
+        console.log("ESC pressed - immediately hiding container");
+        // ✅ Immediately hide the container on ESC
+        setIsFullscreen(false);
+      }
+    };
+
+    // Event listeners
     document.addEventListener("enterpictureinpicture", handlePiPChange);
     document.addEventListener("leavepictureinpicture", handlePiPChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+    document.addEventListener("keydown", handleKeyPress);
 
     return () => {
       document.removeEventListener("enterpictureinpicture", handlePiPChange);
       document.removeEventListener("leavepictureinpicture", handlePiPChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        "mozfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        "MSFullscreenChange",
+        handleFullscreenChange
+      );
+      document.removeEventListener("keydown", handleKeyPress);
     };
-  }, []);
+  }, [isFullscreen]); // Keep dependency to ensure latest state
 
+  // ✅ Enhanced fullscreen overlay with stricter conditional rendering
   return onSources ? (
     <div className="flex flex-col justify-end gap-y-5 h-screen draggable">
-      {/* ✅ Regular Preview */}
-      {preview && (
+      {/* ✅ Regular Preview (when not fullscreen) */}
+      {preview && !isFullscreen && (
         <div className="relative w-6/12 self-end">
           <video
             autoPlay
-            muted
+            muted={isMuted}
             ref={videoElement}
             className={cn(
               "w-full bg-black rounded-lg border-2 border-white/20",
@@ -193,7 +338,6 @@ const StudioTray = () => {
             onMouseMove={handleMouseMove}
             onMouseEnter={() => setShowControls(true)}
             onMouseLeave={() => {
-              // Start hiding controls when mouse leaves video
               controlsTimeoutRef.current = setTimeout(() => {
                 setShowControls(false);
               }, 1000);
@@ -214,15 +358,11 @@ const StudioTray = () => {
           >
             {/* Volume Control */}
             <button
-              onClick={() => {
-                if (videoElement.current) {
-                  videoElement.current.muted = !videoElement.current.muted;
-                }
-              }}
+              onClick={toggleMute}
               className="non-draggable bg-black/50 hover:bg-black/70 cursor-pointer text-white p-2 rounded-lg transition-all"
-              title="Toggle Mute"
+              title={isMuted ? "Unmute" : "Mute"}
             >
-              🔊
+              <span className="text-sm">{isMuted ? "🔇" : "🔊"}</span>
             </button>
 
             {/* Picture in Picture */}
@@ -236,75 +376,182 @@ const StudioTray = () => {
                 className={isPiP ? "text-green-400" : "text-white"}
               />
             </button>
+
+            {/* Fullscreen Button */}
+            <button
+              onClick={toggleFullscreen}
+              className="non-draggable bg-black/50 hover:bg-black/70 cursor-pointer text-white p-2 rounded-lg transition-all"
+              title="Enter Fullscreen"
+            >
+              <Maximize size={16} className="text-white" />
+            </button>
           </div>
         </div>
       )}
 
-      {/* ✅ Studio Tray Controls */}
-      <div className="rounded-full flex justify-around items-center h-20 w-full border-2 bg-[#171717] draggable border-white/40">
-        {/* Record Button */}
+      {/* ✅ Stricter Fullscreen Overlay - Only render when BOTH conditions are true */}
+      {isFullscreen && preview && (
         <div
-          onClick={() => {
-            if (onSources && combinedStream) {
-              setRecording(true);
-              StartRecording(onSources, combinedStream);
-              console.log("Recording started");
-            } else {
-              console.error("No sources or stream available");
-            }
+          className="fullscreen-container fixed inset-0 z-[9999] bg-black flex items-center justify-center"
+          style={{
+            width: "100vw",
+            height: "100vh",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
           }}
-          className={cn(
-            "non-draggable rounded-full cursor-pointer relative hover:opacity-80 transition-all",
-            recording
-              ? "bg-red-500 w-6 h-6 animate-pulse"
-              : "bg-red-400 w-8 h-8"
-          )}
         >
-          {recording && (
-            <span className="absolute -right-16 top-1/2 transform -translate-y-1/2 text-white text-sm font-mono">
-              {onTimer}
-            </span>
-          )}
-        </div>
-
-        {/* Pause/Stop Button */}
-        {!recording ? (
-          <Pause
-            className="non-draggable opacity-50"
-            size={32}
-            fill="white"
-            stroke="none"
-          />
-        ) : (
-          <Square
-            size={32}
-            className="non-draggable cursor-pointer hover:scale-110 transform transition duration-150"
-            fill="white"
-            onClick={() => {
-              setRecording(false);
-              clearTime();
-              onStopRecording();
-              console.log("Recording stopped");
+          <video
+            autoPlay
+            muted={isMuted}
+            ref={fullscreenVideoElement}
+            className="w-full h-full object-contain"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              width: "100vw",
+              height: "100vh",
             }}
-            stroke="white"
+            onMouseMove={handleMouseMove}
+            onMouseEnter={() => setShowControls(true)}
+            onLoadedData={() => {
+              console.log("Fullscreen video loaded and ready");
+            }}
           />
-        )}
 
-        {/* Cast Button */}
-        <Cast
-          onClick={() => {
-            setPreview((prev) => {
-              const newPreview = !prev;
-              console.log(`📺 Preview ${newPreview ? "enabled" : "disabled"}`);
-              return newPreview;
-            });
-          }}
-          size={32}
-          fill={preview ? "#10B981" : "white"}
-          className="non-draggable cursor-pointer hover:opacity-60 transition-all"
-          stroke={preview ? "#10B981" : "white"}
-        />
-      </div>
+          {/* Fullscreen Controls */}
+          <div
+            className={`absolute top-4 right-4 flex gap-3 z-[10000] transition-opacity duration-300 ${
+              showControls ? "opacity-100" : "opacity-0"
+            }`}
+            onMouseEnter={() => {
+              setShowControls(true);
+              if (controlsTimeoutRef.current) {
+                clearTimeout(controlsTimeoutRef.current);
+              }
+            }}
+          >
+            {/* Volume Control in Fullscreen */}
+            <button
+              onClick={toggleMute}
+              className="non-draggable bg-black/70 hover:bg-black/90 cursor-pointer text-white p-3 rounded-lg transition-all shadow-lg"
+              title={isMuted ? "Unmute" : "Mute"}
+            >
+              <span className="text-lg">{isMuted ? "🔇" : "🔊"}</span>
+            </button>
+
+            {/* Picture in Picture */}
+            <button
+              onClick={togglePiP}
+              className="non-draggable bg-black/70 hover:bg-black/90 cursor-pointer text-white p-3 rounded-lg transition-all shadow-lg"
+              title="Picture in Picture"
+            >
+              <PictureInPicture2
+                size={20}
+                className={isPiP ? "text-green-400" : "text-white"}
+              />
+            </button>
+
+            {/* Exit Fullscreen */}
+            <button
+              onClick={toggleFullscreen}
+              className="non-draggable bg-red-500 hover:bg-red-600 cursor-pointer text-white p-3 rounded-lg transition-all shadow-lg"
+              title="Exit Fullscreen"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Exit Instructions */}
+          <div
+            className={`absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-6 py-3 rounded-lg text-center transition-opacity duration-300 z-[10000] ${
+              showControls ? "opacity-100" : "opacity-0"
+            }`}
+            onMouseEnter={() => setShowControls(true)}
+          >
+            <div className="flex items-center gap-2 text-sm">
+              <kbd className="bg-white/20 px-2 py-1 rounded font-mono text-xs">
+                ESC
+              </kbd>
+              <span>or click</span>
+              <span className="bg-red-600 px-2 py-1 rounded text-xs">❌</span>
+              <span>to exit fullscreen</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Studio Tray Controls - Hidden in fullscreen */}
+      {!isFullscreen && (
+        <div className="rounded-full flex justify-around items-center h-20 w-full border-2 bg-[#171717] draggable border-white/40">
+          {/* Record Button */}
+          <div
+            onClick={() => {
+              if (onSources && combinedStream) {
+                setRecording(true);
+                StartRecording(onSources, combinedStream);
+                console.log("Recording started");
+              } else {
+                console.error("No sources or stream available");
+              }
+            }}
+            className={cn(
+              "non-draggable rounded-full cursor-pointer relative hover:opacity-80 transition-all",
+              recording
+                ? "bg-red-500 w-6 h-6 animate-pulse"
+                : "bg-red-400 w-8 h-8"
+            )}
+          >
+            {recording && (
+              <span className="absolute -right-16 top-1/2 transform -translate-y-1/2 text-white text-sm font-mono">
+                {onTimer}
+              </span>
+            )}
+          </div>
+
+          {/* Pause/Stop Button */}
+          {!recording ? (
+            <Pause
+              className="non-draggable opacity-50"
+              size={32}
+              fill="white"
+              stroke="none"
+            />
+          ) : (
+            <Square
+              size={32}
+              className="non-draggable cursor-pointer hover:scale-110 transform transition duration-150"
+              fill="white"
+              onClick={() => {
+                setRecording(false);
+                clearTime();
+                onStopRecording();
+                console.log("Recording stopped");
+              }}
+              stroke="white"
+            />
+          )}
+
+          {/* Cast Button */}
+          <Cast
+            onClick={() => {
+              setPreview((prev) => {
+                const newPreview = !prev;
+                console.log(
+                  `📺 Preview ${newPreview ? "enabled" : "disabled"}`
+                );
+                return newPreview;
+              });
+            }}
+            size={32}
+            fill={preview ? "#10B981" : "white"}
+            className="non-draggable cursor-pointer hover:opacity-60 transition-all"
+            stroke={preview ? "#10B981" : "white"}
+          />
+        </div>
+      )}
     </div>
   ) : (
     <div className="flex items-center justify-center h-screen text-white">
