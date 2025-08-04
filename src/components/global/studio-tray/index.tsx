@@ -25,6 +25,21 @@ const StudioTray = () => {
   >(undefined);
 
   const [isPiP, setIsPiP] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Mouse movement handler
+  const handleMouseMove = () => {
+    setShowControls(true);
+
+    // clear existing timeout
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+
+    // hide controle after 3 seconds of no movement
+    controlsTimeoutRef.current = setTimeout(() => setShowControls(false), 3000);
+  };
 
   const clearTime = () => {
     setOnTimer("00:00:00");
@@ -175,13 +190,42 @@ const StudioTray = () => {
               "w-full bg-black rounded-lg border-2 border-white/20",
               "shadow-lg"
             )}
-            // style={{
-            //   transform: "scaleX(-1)", // ✅ Mirror effect for better preview
-            // }}
+            onMouseMove={handleMouseMove}
+            onMouseEnter={() => setShowControls(true)}
+            onMouseLeave={() => {
+              // Start hiding controls when mouse leaves video
+              controlsTimeoutRef.current = setTimeout(() => {
+                setShowControls(false);
+              }, 1000);
+            }}
           />
 
           {/* Video Controls Overlay */}
-          <div className="absolute top-2 right-2 flex gap-2">
+          <div
+            className={`absolute top-2 right-2 flex gap-2 transition-opacity duration-300 ${
+              showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+            onMouseEnter={() => {
+              setShowControls(true);
+              if (controlsTimeoutRef.current) {
+                clearTimeout(controlsTimeoutRef.current);
+              }
+            }}
+          >
+            {/* Volume Control */}
+            <button
+              onClick={() => {
+                if (videoElement.current) {
+                  videoElement.current.muted = !videoElement.current.muted;
+                }
+              }}
+              className="non-draggable bg-black/50 hover:bg-black/70 cursor-pointer text-white p-2 rounded-lg transition-all"
+              title="Toggle Mute"
+            >
+              🔊
+            </button>
+
+            {/* Picture in Picture */}
             <button
               onClick={togglePiP}
               className="non-draggable bg-black/50 hover:bg-black/70 cursor-pointer text-white p-2 rounded-lg transition-all"
