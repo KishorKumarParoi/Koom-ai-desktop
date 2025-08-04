@@ -75,5 +75,5 @@ export const useMediaSources = () => {
     fetchMediaResources();
   }, []);
 
-  return { state, fetchMediaResources };
+  return { state };
 };
