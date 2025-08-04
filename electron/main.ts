@@ -166,7 +166,7 @@ ipcMain.handle("getResources", async () => {
   }));
 });
 
-ipcMain.on("media-sources", (_, payload) => {
+ipcMain.on("k", (_, payload) => {
   console.log("EVENT:✅🎮  media sources", payload);
   studio?.webContents.send("profile-received", payload);
 

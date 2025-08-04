@@ -131,7 +131,7 @@ ipcMain.handle("getResources", async () => {
     appIcon: source.appIcon ? source.appIcon.toDataURL() : null
   }));
 });
-ipcMain.on("media-sources", (_, payload) => {
+ipcMain.on("k", (_, payload) => {
   console.log("EVENT:✅🎮  media sources", payload);
   studio == null ? void 0 : studio.webContents.send("profile-received", payload);
 });
