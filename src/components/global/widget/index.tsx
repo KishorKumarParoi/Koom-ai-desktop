@@ -31,7 +31,7 @@ const Widget = () => {
   } | null>(null);
 
   const { user } = useUser();
-  const { state, fetchMediaResources } = useMediaSources();
+  const { state } = useMediaSources();
 
   // console.log("state", state);
   // console.log("fetchMediaResources: ", fetchMediaResources);

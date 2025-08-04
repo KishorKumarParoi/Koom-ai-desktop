@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { onStopRecording, selectSources, StartRecording } from "@/lib/recorder";
 import { cn, videoRecordingTime } from "@/lib/utils";
 import {
@@ -209,6 +210,7 @@ const StudioTray = () => {
     };
 
     setupSources();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onSources?.screen, onSources?.audio, onSources?.preset, preview]);
 
   // ✅ Enhanced video stream assignment with mute state sync
