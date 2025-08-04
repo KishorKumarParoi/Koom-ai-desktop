@@ -439,7 +439,7 @@ const StudioTray = () => {
               className="non-draggable bg-black/70 hover:bg-black/90 cursor-pointer text-white p-3 rounded-lg transition-all shadow-lg"
               title={isMuted ? "Unmute" : "Mute"}
             >
-              <span className="text-lg">{isMuted ? "🔇" : "🔊"}</span>
+              <span className="text-lgff">{isMuted ? "🔇" : "🔊"}</span>
             </button>
 
             {/* Picture in Picture */}
