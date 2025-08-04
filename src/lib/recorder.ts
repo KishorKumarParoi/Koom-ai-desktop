@@ -20,7 +20,19 @@ export const StartRecording = (
   videoTransferFileName = `${uuid()}-${onSources?.id.slice(0, 8)}.webm`;
   if (!stream) {
     console.log("There is no stream");
+    return;
   }
+
+  // initialise mediaRecorder with the stream first
+  if (!mediaRecorder) {
+    mediaRecorder = new MediaRecorder(stream, {
+      mimeType: "video/webm; codecs=vp9",
+    });
+
+    mediaRecorder.ondataavailable = onDataAvailable;
+    mediaRecorder.onstop = stopRecording;
+  }
+  // now start recording
   mediaRecorder.start(1000);
 };
 
