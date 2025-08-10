@@ -154,6 +154,23 @@ const StudioTray = () => {
   };
 
   useEffect(() => {
+    if (!window.ipcRenderer) {
+      console.error("❌ IPC Renderer not available!");
+    }
+
+    const fallbackTimer = setTimeout(() => {
+      if (!onSources) {
+        console.warn("⚠️ No sources received after 5s, using fallback data");
+        setOnSources({
+          screen: "mock-screen-id",
+          id: "mock-session-id",
+          audio: "mock-audio-id",
+          preset: "SD",
+          plan: "FREE",
+        });
+      }
+    }, 5000);
+
     const handleProfileReceived = (
       _: any,
       payload: SetStateAction<
@@ -167,14 +184,18 @@ const StudioTray = () => {
         | undefined
       >
     ) => {
-      console.log("Running on Studio-Tray💻: ", payload);
+      clearTimeout(fallbackTimer);
+      console.log("Profile received 💻: ", payload);
       setOnSources(payload);
     };
 
     window.ipcRenderer.on("profile-received", handleProfileReceived);
 
     return () => {
-      window.ipcRenderer.off("profile-received", handleProfileReceived);
+      clearTimeout(fallbackTimer);
+      if (window.ipcRenderer) {
+        window.ipcRenderer.off("profile-received", handleProfileReceived);
+      }
     };
   }, []);
 
