@@ -13,6 +13,7 @@ const WebCam = () => {
       await camElement.current?.play();
     }
   };
+
   useEffect(() => {
     streamWebCam();
   }, []);
