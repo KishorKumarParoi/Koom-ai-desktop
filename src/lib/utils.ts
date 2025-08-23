@@ -8,7 +8,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const onCloseApp = () => window.ipcRenderer.send("closeApp");
+export const onCloseApp = () => {
+  if (window.ipcRenderer) {
+    window.ipcRenderer.send("closeApp");
+  } else {
+    window.close();
+  }
+};
 
 const httpsClient = axios.create({
   baseURL: import.meta.env.VITE_HOST_URL,

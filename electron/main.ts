@@ -201,6 +201,10 @@ const setupIpcHandlers = (): void => {
     if (process.platform !== "darwin") {
       closeAllWindows();
       app.quit();
+    } else {
+      setTimeout(() => {
+        app.quit();
+      }, 500);
     }
   });
 
