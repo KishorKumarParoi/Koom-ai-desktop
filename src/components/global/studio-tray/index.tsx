@@ -197,7 +197,7 @@ const StudioTray = () => {
         window.ipcRenderer.off("profile-received", handleProfileReceived);
       }
     };
-  }, []);
+  }, [onSources]);
 
   // ✅ Enhanced setupSources effect
   useEffect(() => {
@@ -346,7 +346,11 @@ const StudioTray = () => {
 
   // ✅ Enhanced fullscreen overlay with stricter conditional rendering
   return onSources ? (
-    <div className="flex flex-col justify-end gap-y-5 h-screen draggable">
+    <div
+      className={cn(
+        "flex flex-col justify-end gap-y-5 h-screen draggable bg-slate-900"
+      )}
+    >
       {/* ✅ Regular Preview (when not fullscreen) */}
       {preview && !isFullscreen && (
         <div className="relative w-6/12 self-end">
@@ -355,7 +359,7 @@ const StudioTray = () => {
             muted={isMuted}
             ref={videoElement}
             className={cn(
-              "w-full bg-black rounded-lg border-2 border-white/20",
+              "w-full bg-transparent rounded-lg border-2 border-white/20",
               "shadow-lg"
             )}
             onMouseMove={handleMouseMove}
