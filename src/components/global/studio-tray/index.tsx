@@ -348,7 +348,7 @@ const StudioTray = () => {
   return onSources ? (
     <div
       className={cn(
-        "flex flex-col justify-end gap-y-5 h-screen draggable bg-slate-900"
+        "flex flex-col justify-end gap-y-5 h-screen draggable bg-transparent"
       )}
     >
       {/* ✅ Regular Preview (when not fullscreen) */}
@@ -516,8 +516,8 @@ const StudioTray = () => {
           {/* Record Button */}
           <div
             onClick={() => {
+              setRecording(true);
               if (onSources && combinedStream) {
-                setRecording(true);
                 StartRecording(onSources, combinedStream);
                 console.log("Recording started");
               } else {
