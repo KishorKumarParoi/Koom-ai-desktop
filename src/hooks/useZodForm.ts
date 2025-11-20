@@ -13,7 +13,7 @@ export const useZodForm = <T extends z.ZodType<any>>(
     watch,
     reset,
   } = useForm<z.infer<T>>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any),
     defaultValues,
   });
 
