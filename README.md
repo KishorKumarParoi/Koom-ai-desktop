@@ -1,31 +1,59 @@
-# React + TypeScript + Vite
+# 🖥️ KoomAI Desktop — Cross-Platform Screen Recording Studio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![Electron](https://img.shields.io/badge/Electron-v30.0-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-v5.1-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![React](https://img.shields.io/badge/React-v18.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-v5.2-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Socket.IO](https://img.shields.io/badge/Socket.IO-Client-010101?logo=socket.io&logoColor=white)](https://socket.io/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4.1-38B2AC?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 
-Currently, two official plugins are available:
+> Native desktop screen recorder and studio tray client for the **KoomAI Enterprise Video Platform**. Features hardware-accelerated 60 FPS recording, floating circular webcam overlay, real-time chunk streaming to the Express ingestion backend, and Clerk authentication.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## ⚡ Quickstart Runbooks
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+### 1. Launch in Development Mode (Native Electron + Vite Dev Server)
+```bash
+./deploy.sh
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
-# Koom-ai-desktop
+### 2. Launch Vite Web Preview Mode (Port 5173)
+```bash
+./deploy.sh --web
+```
+
+### 3. Build Production Native Installers (.dmg / .exe / .AppImage)
+```bash
+./deploy.sh --build
+```
+
+### 4. Clean Process Teardown
+```bash
+./clear.sh
+```
+
+---
+
+## 🔗 Multi-Platform Connectivity
+
+- **Ingestion Backend (`VITE_SOCKET_URL`)**: Streams real-time binary chunks to `http://localhost:5001`.
+- **Web App Cockpit (`VITE_HOST_URL`)**: Syncs with Next.js 16 platform at `http://localhost:3000/api`.
+- **Authentication**: Seamless Clerk JWT single-sign-on matching web user credentials.
+
+---
+
+## 🔧 Environment Variables (`.env`)
+
+```ini
+VITE_CLERK_PUBLISHABLE_KEY="pk_test_aW1tb3J0YWwtY2F0LTUzLmNsZXJrLmFjY291bnRzLmRldiQ"
+VITE_HOST_URL=http://localhost:3000/api
+VITE_APP_URL=http://localhost:5173
+VITE_SOCKET_URL=http://localhost:5001/
+NODE_ENV="development"
+```
+
+---
+
+## 🏛️ Architecture & System Design
+For full multi-process specifications and sequence flows, refer to [ARCHITECTURE.md](file:///Users/kishorkumarparoi/job-project/koom-ai-desktop/ARCHITECTURE.md).
